@@ -3,7 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
@@ -18,6 +19,7 @@ const Index = () => {
   const [customPhrases, setCustomPhrases] = useLocalStorage<Phrase[]>('rescue-talk-custom-phrases', []);
   const [newPhrase, setNewPhrase] = useState({ russian: '', english: '', transcription: '' });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [phraseToDelete, setPhraseToDelete] = useState<Phrase | null>(null);
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
@@ -78,6 +80,14 @@ const Index = () => {
     setIsAddDialogOpen(false);
     toast.success('Фраза добавлена и сохранена локально');
   };
+
+  const handleDeletePhrase = (phraseId: string) => {
+    setCustomPhrases(customPhrases.filter(p => p.id !== phraseId));
+    setPhraseToDelete(null);
+    toast.success('Фраза удалена');
+  };
+
+  const isCustomPhrase = (phrase: Phrase) => phrase.id.startsWith('custom-');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent">
@@ -202,14 +212,26 @@ const Index = () => {
                     <Badge className={`${category?.color || 'bg-primary'} text-white font-bold`}>
                       {category?.name || 'Другое'}
                     </Badge>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => speakPhrase(phrase.english)}
-                      className="h-8 w-8 p-0 hover:bg-accent hover:text-white"
-                    >
-                      <Icon name="Volume2" size={18} />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => speakPhrase(phrase.english)}
+                        className="h-8 w-8 p-0 hover:bg-accent hover:text-white"
+                      >
+                        <Icon name="Volume2" size={18} />
+                      </Button>
+                      {isCustomPhrase(phrase) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setPhraseToDelete(phrase)}
+                          className="h-8 w-8 p-0 hover:bg-destructive hover:text-white"
+                        >
+                          <Icon name="Trash2" size={18} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-3">
@@ -242,6 +264,27 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!phraseToDelete} onOpenChange={() => setPhraseToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-bold">Удалить фразу?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Вы уверены, что хотите удалить фразу <strong>"{phraseToDelete?.russian}"</strong>? 
+              Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-bold">Отмена</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => phraseToDelete && handleDeletePhrase(phraseToDelete.id)}
+              className="bg-destructive hover:bg-destructive/90 font-bold"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
