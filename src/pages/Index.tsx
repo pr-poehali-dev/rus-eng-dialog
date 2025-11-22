@@ -11,6 +11,7 @@ import Icon from '@/components/ui/icon';
 import { defaultPhrases, categories, Phrase } from '@/data/phrases';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { generateTranscriptionWithAPI } from '@/utils/transcription';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
   const [newPhrase, setNewPhrase] = useState({ russian: '', english: '', transcription: '' });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [phraseToDelete, setPhraseToDelete] = useState<Phrase | null>(null);
+  const [isGeneratingTranscription, setIsGeneratingTranscription] = useState(false);
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
@@ -89,6 +91,22 @@ const Index = () => {
 
   const isCustomPhrase = (phrase: Phrase) => phrase.id.startsWith('custom-');
 
+  const handleEnglishChange = async (value: string) => {
+    setNewPhrase({ ...newPhrase, english: value });
+    
+    if (value.length > 2) {
+      setIsGeneratingTranscription(true);
+      try {
+        const transcription = await generateTranscriptionWithAPI(value);
+        setNewPhrase(prev => ({ ...prev, transcription }));
+      } catch (error) {
+        console.error('Error generating transcription:', error);
+      } finally {
+        setIsGeneratingTranscription(false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent">
       <div className="container max-w-6xl mx-auto p-4 pb-20">
@@ -139,20 +157,29 @@ const Index = () => {
                     <Input
                       id="english"
                       value={newPhrase.english}
-                      onChange={(e) => setNewPhrase({ ...newPhrase, english: e.target.value })}
+                      onChange={(e) => handleEnglishChange(e.target.value)}
                       placeholder="Enter English translation"
                       className="mt-2"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="transcription" className="font-bold">Транскрипция</Label>
+                    <Label htmlFor="transcription" className="font-bold flex items-center gap-2">
+                      Транскрипция
+                      {isGeneratingTranscription && (
+                        <span className="text-xs text-muted-foreground font-normal">(генерируется...)</span>
+                      )}
+                    </Label>
                     <Input
                       id="transcription"
                       value={newPhrase.transcription}
                       onChange={(e) => setNewPhrase({ ...newPhrase, transcription: e.target.value })}
                       placeholder="[trænˈskrɪpʃən]"
                       className="mt-2"
+                      disabled={isGeneratingTranscription}
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Автоматически генерируется при вводе английского текста
+                    </p>
                   </div>
                   <Button onClick={handleAddPhrase} className="w-full font-bold" size="lg">
                     Сохранить фразу
