@@ -1,20 +1,30 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { defaultPhrases, categories, Phrase } from '@/data/phrases';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useLocalStorage<string>('rescue-talk-category', 'all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [customPhrases, setCustomPhrases] = useState<Phrase[]>([]);
+  const [customPhrases, setCustomPhrases] = useLocalStorage<Phrase[]>('rescue-talk-custom-phrases', []);
   const [newPhrase, setNewPhrase] = useState({ russian: '', english: '', transcription: '' });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const isOnline = useOnlineStatus();
+
+  useEffect(() => {
+    if (!isOnline) {
+      toast.info('Офлайн-режим: данные сохранены локально');
+    }
+  }, [isOnline]);
 
   const allPhrases = useMemo(() => {
     return [...defaultPhrases, ...customPhrases];
@@ -66,13 +76,22 @@ const Index = () => {
     setCustomPhrases([...customPhrases, phrase]);
     setNewPhrase({ russian: '', english: '', transcription: '' });
     setIsAddDialogOpen(false);
-    toast.success('Фраза добавлена');
+    toast.success('Фраза добавлена и сохранена локально');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent">
       <div className="container max-w-6xl mx-auto p-4 pb-20">
         <header className="py-6 mb-8">
+          {!isOnline && (
+            <Alert className="mb-4 bg-accent/20 border-accent">
+              <Icon name="WifiOff" className="h-4 w-4" />
+              <AlertDescription className="font-semibold">
+                Офлайн-режим: все данные сохранены на устройстве
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-destructive rounded-lg flex items-center justify-center">
