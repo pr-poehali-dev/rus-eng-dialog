@@ -12,6 +12,7 @@ import { defaultPhrases, categories, Phrase } from '@/data/phrases';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { generateTranscriptionWithAPI } from '@/utils/transcription';
+import { InstallPrompt } from '@/components/InstallPrompt';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -109,8 +110,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent">
-      <div className="container max-w-6xl mx-auto p-4 pb-20">
-        <header className="py-6 mb-8">
+      <div className="container max-w-6xl mx-auto p-4 pb-20 safe-area-inset">
+        <header className="py-4 mb-6">
+          <InstallPrompt />
+          
           {!isOnline && (
             <Alert className="mb-4 bg-accent/20 border-accent">
               <Icon name="WifiOff" className="h-4 w-4" />

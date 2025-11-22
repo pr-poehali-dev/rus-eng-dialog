@@ -100,5 +100,21 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Roboto", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+}
+
+@layer utilities {
+  .safe-area-inset {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  @supports (-webkit-touch-callout: none) {
+    .safe-area-inset {
+      padding-bottom: max(5rem, env(safe-area-inset-bottom));
+    }
   }
 }
